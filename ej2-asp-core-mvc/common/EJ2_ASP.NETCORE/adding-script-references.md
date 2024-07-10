@@ -855,20 +855,55 @@ Restart Visual Studio for the red squiggly lines below "**UseDefaultFiles**" and
 // nodejs requiring statement for importing and using the package in this js file
 var gulp = require('gulp');
 var glob = require('glob');
+var fs = require('fs');
+var log = require('fancy-log');
+var plumber = require('gulp-plumber');
+var coffee = require('gulp-coffee');
+var gutil = require('gulp-util');
+var gulpif = require('gulp-if');
+
+
 // gulp task for copying file form “node_modules” to “wwwroot” directory
 gulp.task("copy-client-resource", function (done) {
     let packagePath = './node_modules/@syncfusion/';
     let destCommonPath = 'wwwroot/syncfusion'
     let installedPackages = glob.sync(`${packagePath}*`);
+
+    // only for js
+
     for (let insPackage of installedPackages) {
-        let packagename = insPackage.replace(packagePath, '');
+        log("Install Package : " + insPackage);
+        let packagename = insPackage
+            .replace("./node_modules", "")
+            .replace("/@syncfusion/", "")
+            .replace("node_modules", "")
+            .replace("\\@syncfusion\\", "");
+
+
+        log("Package name : " + packagename);
+
         gulp.src(`${insPackage}/dist/global/**/*`)
-            .pipe(gulp.dest(`${destCommonPath}/${packagename}/`));
+            .on("error", gutil.log)
+            .pipe(plumber())
+            .pipe(gulp.dest(`${destCommonPath}/${packagename}/`))
+            .on("error", gutil.log);
+
+
         gulp.src(`${insPackage}/styles/**/*.css`)
-            .pipe(gulp.dest(`${destCommonPath}/${packagename}/styles/`));
+            .on("error", gutil.log)
+            .pipe(plumber())
+            .pipe(gulp.dest(`${destCommonPath}/${packagename}/styles/`))
+            .on("error", gutil.log);
+
+
     }
+
+
     done();
 });
+
+
+
 
 {% endhighlight %}
 {% endtabs %}
